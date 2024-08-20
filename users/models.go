@@ -15,7 +15,7 @@ type UserPost struct {
 	Password  string  `json:"password"`
 }
 
-type loginReq struct {
-	Email    string `json:"email"`
+type Credentials struct {
+	Username string `json:"username"`
 	Password string `json:"password"`
 }
