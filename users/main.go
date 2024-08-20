@@ -9,6 +9,8 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	gin "github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	_ "github.com/joho/godotenv/autoload"
 	bcrypt "golang.org/x/crypto/bcrypt"
 )
 
@@ -23,33 +25,29 @@ var logger *log.Logger = log.New(os.Stderr, "ERROR: ", log.LstdFlags|log.Lshortf
 
 var users = []User{
 	{
-		ID:        "1",
+		ID:        1,
 		FirstName: stringPtr("John"),
 		Surname:   stringPtr("Doe"),
 		Email:     "john@example.com",
 	},
 	{
-		ID:        "2",
+		ID:        2,
 		FirstName: stringPtr("Arthur"),
 		Surname:   stringPtr("Morgan"),
 		Email:     "arthur@example.com",
 	},
 	{
-		ID:        "3",
+		ID:        3,
 		FirstName: stringPtr("Fake"),
 		Surname:   stringPtr("Name"),
 		Email:     "fake@example.com",
 	},
 }
 
-var maxId string = "3"
+var maxId uint64 = 3
 
-func incrementMaxId() string {
-	intVal, _ := (strconv.Atoi(maxId))
-
-	intVal++
-
-	maxId = strconv.Itoa(intVal)
+func incrementMaxId() uint64 {
+	maxId++
 	return maxId
 }
 
@@ -75,7 +73,14 @@ func postUser(c *gin.Context) {
 
 func getUserById(c *gin.Context) {
 
-	id := c.Param("id")
+	idStr := c.Param("id")
+
+	//pase the number into an unsigned unit64 in base 10
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		return
+	}
 
 	for _, a := range users {
 		if a.ID == id {
@@ -159,6 +164,12 @@ func protectedEndpoint(c *gin.Context) {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+
+	InitDB()
 	router := gin.Default()
 	router.GET("users/:id", getUserById)
 	router.POST("users/", postUser)

@@ -23,7 +23,7 @@ FROM debian:bookworm-slim
 WORKDIR /app
 
 # Copy the pre-built binary from the builder stage
-COPY --from=builder /app/main .
+COPY --from=builder /app/. .
 
 # Debug: List files to verify the binary exists
 RUN ls -l /app
