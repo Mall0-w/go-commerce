@@ -22,9 +22,10 @@ func main() {
 
 	// Route to forward requests to the users service
 	router.Any("/users/*path", func(c *gin.Context) {
-		// Remove the /users prefix before forwarding to the users service
-		c.Request.URL.Path = c.Param("path")
-		logger.Println(c.Request.URL.Path)
+		// Log the incoming request for debugging
+		logger.Printf("Forwarding request: %s %s\n", c.Request.Method, c.Request.URL.String())
+
+		// Forward the request as-is to the users service
 		usersServiceProxy.ServeHTTP(c.Writer, c.Request)
 	})
 

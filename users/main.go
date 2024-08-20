@@ -83,10 +83,10 @@ func getUserById(c *gin.Context) {
 
 func main() {
 	router := gin.Default()
-	router.GET("/:id", getUserById)
-	router.POST("/", postUser)
+	router.GET("users/:id", getUserById)
+	router.POST("users/", postUser)
 
-	router.GET("/", func(c *gin.Context) {
+	router.GET("users/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "Users Microservice"})
 	})
 
