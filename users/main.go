@@ -14,42 +14,8 @@ import (
 	bcrypt "golang.org/x/crypto/bcrypt"
 )
 
-func stringPtr(s string) *string {
-	return &s
-}
-
 var jwtKey = []byte("my_secret_key")
 var logger *log.Logger = log.New(os.Stderr, "ERROR: ", log.LstdFlags|log.Lshortfile)
-
-// Sample users with pointer values for optional fields
-
-var users = []User{
-	{
-		ID:        1,
-		FirstName: stringPtr("John"),
-		Surname:   stringPtr("Doe"),
-		Email:     "john@example.com",
-	},
-	{
-		ID:        2,
-		FirstName: stringPtr("Arthur"),
-		Surname:   stringPtr("Morgan"),
-		Email:     "arthur@example.com",
-	},
-	{
-		ID:        3,
-		FirstName: stringPtr("Fake"),
-		Surname:   stringPtr("Name"),
-		Email:     "fake@example.com",
-	},
-}
-
-var maxId uint64 = 3
-
-func incrementMaxId() uint64 {
-	maxId++
-	return maxId
-}
 
 func postUser(c *gin.Context) {
 	var userPost UserPost
@@ -60,14 +26,20 @@ func postUser(c *gin.Context) {
 	//salt and hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userPost.Password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	//increment id and then add
-	newUser := User{incrementMaxId(), userPost.FirstName, userPost.Surname, userPost.Email, hashedPassword}
+	newUser := User{0, userPost.FirstName, userPost.Surname, userPost.Email, hashedPassword}
+	newUser, err = AddUser(newUser)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	// Add the new album to the slice.
-	users = append(users, newUser)
 	c.IndentedJSON(http.StatusCreated, newUser)
 }
 
@@ -82,14 +54,19 @@ func getUserById(c *gin.Context) {
 		return
 	}
 
-	for _, a := range users {
-		if a.ID == id {
-			c.IndentedJSON(http.StatusOK, a)
-			return
-		}
+	user, err := GetUserByID(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
 	}
 
-	c.JSON(http.StatusNotFound, gin.H{"message": "User not found"})
+	if user.IsEmpty() {
+		c.JSON(http.StatusNotFound, gin.H{"message": "User with given Id doesn't exist"})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, user)
+
 }
 
 func login(c *gin.Context) {
@@ -99,19 +76,19 @@ func login(c *gin.Context) {
 		return
 	}
 
-	var user *User = nil
-	for _, u := range users {
-		if u.Email == creds.Username {
-			user = &u
-		}
+	user, err := GetUserByEmail(creds.Username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
 	}
-	if user == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+
+	if user.IsEmpty() {
+		c.JSON(http.StatusNotFound, gin.H{"message": "User with given Id doesn't exist"})
 		return
 	}
 
 	// Validate credentials here (usually check against a database)
-	err := bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(creds.Password))
+	err = bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(creds.Password))
 	if err != nil {
 		// Password does not match
 		logger.Println("Invalid password")

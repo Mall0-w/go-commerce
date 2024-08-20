@@ -10,11 +10,19 @@ import (
 )
 
 type User struct {
-	ID           uint64  `json:"id"`
+	Id           uint64  `json:"id"`
 	FirstName    *string `json:"firstName,omitempty"` // Pointer means optional
 	Surname      *string `json:"surname,omitempty"`   // Pointer means optional
 	Email        string  `json:"email"`
 	PasswordHash []byte  `json:"-"` // Omit from JSON responses
+}
+
+func (u User) IsEmpty() bool {
+	return u.Id == 0 &&
+		u.FirstName == nil &&
+		u.Surname == nil &&
+		u.Email == "" &&
+		len(u.PasswordHash) == 0
 }
 
 type UserPost struct {
