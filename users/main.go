@@ -14,7 +14,6 @@ import (
 	bcrypt "golang.org/x/crypto/bcrypt"
 )
 
-var jwtKey = []byte("my_secret_key")
 var logger *log.Logger = log.New(os.Stderr, "ERROR: ", log.LstdFlags|log.Lshortfile)
 
 func postUser(c *gin.Context) {
@@ -112,30 +111,6 @@ func login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": tokenString})
 }
 
-func AuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		tokenString := c.GetHeader("Authorization")
-		if tokenString == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token missing"})
-			c.Abort()
-			return
-		}
-
-		claims := &jwt.MapClaims{}
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
-		})
-
-		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			c.Abort()
-			return
-		}
-
-		c.Next()
-	}
-}
-
 func protectedEndpoint(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "This is a protected endpoint"})
 }
@@ -151,7 +126,7 @@ func main() {
 	router.GET("users/:id", getUserById)
 	router.POST("users/", postUser)
 
-	router.GET("users/", func(c *gin.Context) {
+	router.GET("users/testConnection", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "Users Microservice"})
 	})
 

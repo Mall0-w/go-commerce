@@ -7,6 +7,7 @@ import (
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/joho/godotenv/autoload"
 )
 
 type User struct {

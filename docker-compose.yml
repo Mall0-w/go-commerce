@@ -1,9 +1,17 @@
 services:
+  
   users-service:
     container_name: users-service
     build:
       context: ./users
       dockerfile: ./Dockerfile
+  
+  product-service:
+    container_name: product-service
+    build:
+      context: ./products
+      dockerfile: ./Dockerfile
+  
   gateway:
     container_name: gateway
     build:
@@ -13,3 +21,4 @@ services:
       - "8080:8080"
     depends_on:
       - users-service
+      - product-service
